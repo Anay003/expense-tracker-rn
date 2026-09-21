@@ -5,111 +5,21 @@ import {
   ExpenseCategory,
   CategoryStat,
 } from '@/types/expense';
+import { API_BASE_URL } from '@/config/api';
+import { logger } from './logger';
 
-/**
- * Service interface mirroring standard ASP.NET Core Web API endpoints:
- * - GET    /api/expenses
- * - GET    /api/expenses/{id}
- * - POST   /api/expenses
- * - DELETE /api/expenses/{id}
- * - GET    /api/expenses/summary
- */
 export interface IExpenseService {
   getAll(filter?: ExpenseFilter): Promise<Expense[]>;
-  getById(id: string): Promise<Expense | undefined>;
   add(item: Omit<Expense, 'id'>): Promise<Expense>;
   delete(id: string): Promise<boolean>;
   getSummary(): Promise<ExpenseSummary>;
   subscribe(listener: () => void): () => void;
 }
 
-const INITIAL_EXPENSES: Expense[] = [
-  {
-    id: 'exp-1',
-    title: 'Monthly Salary',
-    amount: 5200,
-    category: 'salary',
-    type: 'income',
-    date: '2026-09-01',
-    note: 'Tech Corp direct deposit',
-  },
-  {
-    id: 'exp-2',
-    title: 'Grocery Supermarket',
-    amount: 142.5,
-    category: 'food',
-    type: 'expense',
-    date: '2026-09-03',
-    note: 'Weekly essentials and fruits',
-  },
-  {
-    id: 'exp-3',
-    title: 'Electricity & Water Bill',
-    amount: 95.0,
-    category: 'bills',
-    type: 'expense',
-    date: '2026-09-05',
-    note: 'Apartment utilities',
-  },
-  {
-    id: 'exp-4',
-    title: 'Metro Transit Pass',
-    amount: 60.0,
-    category: 'transport',
-    type: 'expense',
-    date: '2026-09-08',
-    note: 'Monthly city pass',
-  },
-  {
-    id: 'exp-5',
-    title: 'Freelance Design Project',
-    amount: 850.0,
-    category: 'salary',
-    type: 'income',
-    date: '2026-09-10',
-    note: 'Landing page redesign client milestone',
-  },
-  {
-    id: 'exp-6',
-    title: 'New Mechanical Keyboard',
-    amount: 120.0,
-    category: 'shopping',
-    type: 'expense',
-    date: '2026-09-12',
-    note: 'Work from home upgrade',
-  },
-  {
-    id: 'exp-7',
-    title: 'Cinema & Dinner with Friends',
-    amount: 78.5,
-    category: 'entertainment',
-    type: 'expense',
-    date: '2026-09-14',
-    note: 'Weekend outing',
-  },
-  {
-    id: 'exp-8',
-    title: 'Stock Dividend Yield',
-    amount: 145.0,
-    category: 'investment',
-    type: 'income',
-    date: '2026-09-15',
-    note: 'Quarterly index fund distribution',
-  },
-  {
-    id: 'exp-9',
-    title: 'Pharmacy & Vitamins',
-    amount: 34.0,
-    category: 'health',
-    type: 'expense',
-    date: '2026-09-16',
-    note: 'Health supplements',
-  },
-];
-
 class ExpenseService implements IExpenseService {
-  private items: Expense[] = [...INITIAL_EXPENSES];
+  private cachedItems: Expense[] = [];
   private listeners: Set<() => void> = new Set();
+  private endpoint = `${API_BASE_URL}/expenses`;
 
   public subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
@@ -121,19 +31,58 @@ class ExpenseService implements IExpenseService {
       try {
         listener();
       } catch (err) {
-        console.error('Error executing expense listener', err);
+        logger.error('Error executing expense listener callback', err);
       }
     });
   }
 
   /**
-   * Future .NET API integration:
-   * const res = await fetch('http://<api-host>:5000/api/expenses', ...);
-   * return await res.json();
+   * GET /api/expenses
    */
   public async getAll(filter?: ExpenseFilter): Promise<Expense[]> {
-    let result = [...this.items];
+    logger.http('GET', this.endpoint);
 
+    try {
+      const response = await fetch(this.endpoint, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const rawItems: any[] = await response.json();
+      logger.httpSuccess('GET', this.endpoint, response.status, `Received ${rawItems.length} items`);
+
+      // Normalize data from .NET
+      this.cachedItems = rawItems.map((item) => ({
+        id: String(item.id || item.Id || ''),
+        title: item.title || item.Title || '',
+        amount: Number(item.amount ?? item.Amount ?? 0),
+        category: (item.category || item.Category || 'other').toLowerCase() as ExpenseCategory,
+        type: (item.type || item.Type || 'expense').toLowerCase() as 'expense' | 'income',
+        date: item.date || item.Date || new Date().toISOString().split('T')[0],
+        note: item.note ?? item.Note ?? '',
+      }));
+    } catch (error) {
+      logger.httpError(
+        'GET',
+        this.endpoint,
+        0,
+        `Failed to reach .NET backend: ${error instanceof Error ? error.message : String(error)}`
+      );
+      // Re-throw so UI can reflect the network error state accurately
+      if (this.cachedItems.length === 0) {
+        throw error;
+      }
+    }
+
+    let result = [...this.cachedItems];
+
+    // Client-side filtering
     if (filter?.search && filter.search.trim().length > 0) {
       const q = filter.search.toLowerCase().trim();
       result = result.filter(
@@ -151,55 +100,81 @@ class ExpenseService implements IExpenseService {
       result = result.filter((e) => e.type === filter.type);
     }
 
-    // Sort descending by date
     return result.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }
 
-  public async getById(id: string): Promise<Expense | undefined> {
-    return this.items.find((item) => item.id === id);
-  }
-
   /**
-   * Future .NET API integration:
-   * const res = await fetch('http://<api-host>:5000/api/expenses', {
-   *   method: 'POST',
-   *   headers: { 'Content-Type': 'application/json' },
-   *   body: JSON.stringify(item),
-   * });
-   * return await res.json();
+   * POST /api/expenses
    */
   public async add(item: Omit<Expense, 'id'>): Promise<Expense> {
-    const newItem: Expense = {
-      ...item,
-      id: `exp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    logger.http('POST', this.endpoint, item);
+
+    const response = await fetch(this.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(item),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.httpError('POST', this.endpoint, response.status, errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+    }
+
+    const createdItem = await response.json();
+    const normalized: Expense = {
+      id: String(createdItem.id || createdItem.Id),
+      title: createdItem.title || createdItem.Title,
+      amount: Number(createdItem.amount ?? createdItem.Amount),
+      category: (createdItem.category || createdItem.Category).toLowerCase() as ExpenseCategory,
+      type: (createdItem.type || createdItem.Type).toLowerCase() as 'expense' | 'income',
+      date: createdItem.date || createdItem.Date,
+      note: createdItem.note ?? createdItem.Note,
     };
-    this.items.unshift(newItem);
+
+    logger.httpSuccess('POST', this.endpoint, response.status, `Created ID: ${normalized.id}`);
+    this.cachedItems.unshift(normalized);
     this.notify();
-    return newItem;
+    return normalized;
   }
 
   /**
-   * Future .NET API integration:
-   * await fetch(`http://<api-host>:5000/api/expenses/${id}`, { method: 'DELETE' });
+   * DELETE /api/expenses/{id}
    */
   public async delete(id: string): Promise<boolean> {
-    const initialLen = this.items.length;
-    this.items = this.items.filter((item) => item.id !== id);
-    if (this.items.length !== initialLen) {
+    const url = `${this.endpoint}/${id}`;
+    logger.http('DELETE', url);
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+    });
+
+    if (response.status === 204 || response.ok) {
+      logger.httpSuccess('DELETE', url, response.status, `Deleted ID: ${id}`);
+      this.cachedItems = this.cachedItems.filter((e) => e.id !== id);
       this.notify();
       return true;
     }
+
+    logger.httpError('DELETE', url, response.status, 'Delete failed');
     return false;
   }
 
+  /**
+   * Aggregates summary stats directly from current expenses in memory
+   * (Zero duplicate network calls)
+   */
   public async getSummary(): Promise<ExpenseSummary> {
     let totalIncome = 0;
     let totalExpense = 0;
     const categoryTotals: Partial<Record<ExpenseCategory, { amount: number; count: number }>> = {};
 
-    for (const item of this.items) {
+    for (const item of this.cachedItems) {
       if (item.type === 'income') {
         totalIncome += item.amount;
       } else {
@@ -224,7 +199,6 @@ class ExpenseService implements IExpenseService {
       })
     );
 
-    // Sort highest spending first
     breakdown.sort((a, b) => b.amount - a.amount);
 
     const totalBalance = totalIncome - totalExpense;

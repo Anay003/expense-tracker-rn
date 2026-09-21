@@ -68,17 +68,29 @@ export function AddExpenseModal({
     }
   };
 
+  const showAlert = (alertTitle: string, message: string) => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') window.alert(`${alertTitle}\n${message}`);
+      return;
+    }
+    try {
+      Alert.alert(alertTitle, message);
+    } catch {
+      console.warn(alertTitle, message);
+    }
+  };
+
   const handleSubmit = async () => {
     const trimmedTitle = title.trim();
     const parsedAmount = parseFloat(amount);
 
     if (!trimmedTitle) {
-      Alert.alert('Missing Title', 'Please enter a title for this transaction.');
+      showAlert('Missing Title', 'Please enter a title for this transaction.');
       return;
     }
 
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid amount greater than 0.');
+      showAlert('Invalid Amount', 'Please enter a valid amount greater than 0.');
       return;
     }
 
@@ -99,11 +111,12 @@ export function AddExpenseModal({
       onClose();
     } catch (err) {
       console.error('Failed to add transaction', err);
-      Alert.alert('Error', 'Failed to save transaction. Please try again.');
+      showAlert('Error', 'Failed to save transaction. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <Modal

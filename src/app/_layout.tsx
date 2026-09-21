@@ -12,9 +12,19 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // Hide native splash screen as soon as layout mounts
-    SplashScreen.hideAsync().catch(() => {});
+    // Hide native splash screen safely with retry if native view was animating
+    const dismissSplash = async () => {
+      try {
+        await SplashScreen.hideAsync();
+      } catch {
+        setTimeout(() => {
+          SplashScreen.hideAsync().catch(() => {});
+        }, 100);
+      }
+    };
+    dismissSplash();
   }, []);
+
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { Expense, CATEGORY_DETAILS } from '@/types/expense';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
@@ -20,19 +20,33 @@ export function TransactionItem({ item, onDelete }: TransactionItemProps) {
   }).format(item.amount);
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Transaction',
-      `Are you sure you want to delete "${item.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => onDelete?.(item.id),
-        },
-      ]
-    );
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
+        onDelete?.(item.id);
+      }
+      return;
+    }
+
+    try {
+      Alert.alert(
+        'Delete Transaction',
+        `Are you sure you want to delete "${item.title}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => onDelete?.(item.id),
+          },
+        ],
+        { cancelable: true }
+      );
+    } catch {
+      // Fallback if native DialogModule is not attached to an active Activity
+      onDelete?.(item.id);
+    }
   };
+
 
   return (
     <View
