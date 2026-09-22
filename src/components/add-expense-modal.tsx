@@ -19,6 +19,8 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { expenseService } from '@/services/expenseService';
+import { hapticService } from '@/services/hapticService';
+import { HapticPressable } from '@/components/haptic-pressable';
 
 interface AddExpenseModalProps {
   visible: boolean;
@@ -85,11 +87,13 @@ export function AddExpenseModal({
     const parsedAmount = parseFloat(amount);
 
     if (!trimmedTitle) {
+      hapticService.error();
       showAlert('Missing Title', 'Please enter a title for this transaction.');
       return;
     }
 
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      hapticService.error();
       showAlert('Invalid Amount', 'Please enter a valid amount greater than 0.');
       return;
     }
@@ -106,16 +110,19 @@ export function AddExpenseModal({
         note: note.trim() || undefined,
       });
 
+      hapticService.success();
       resetForm();
       onSuccess?.();
       onClose();
     } catch (err) {
+      hapticService.error();
       console.error('Failed to add transaction', err);
       showAlert('Error', 'Failed to save transaction. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
 
   return (
@@ -142,14 +149,15 @@ export function AddExpenseModal({
             <Text style={[styles.modalTitle, { color: theme.text }]}>
               New Transaction
             </Text>
-            <Pressable
+            <HapticPressable
+              haptic="light"
               onPress={onClose}
               hitSlop={10}
               style={({ pressed }) => pressed && { opacity: 0.6 }}>
               <Text style={[styles.closeIcon, { color: theme.textSecondary }]}>
                 ✕
               </Text>
-            </Pressable>
+            </HapticPressable>
           </View>
 
           <ScrollView
@@ -161,7 +169,8 @@ export function AddExpenseModal({
                 styles.typeToggleContainer,
                 { backgroundColor: theme.backgroundElement },
               ]}>
-              <Pressable
+              <HapticPressable
+                haptic="selection"
                 style={[
                   styles.typeTab,
                   type === 'expense' && {
@@ -179,9 +188,10 @@ export function AddExpenseModal({
                   ]}>
                   Expense
                 </Text>
-              </Pressable>
+              </HapticPressable>
 
-              <Pressable
+              <HapticPressable
+                haptic="selection"
                 style={[
                   styles.typeTab,
                   type === 'income' && {
@@ -199,7 +209,7 @@ export function AddExpenseModal({
                   ]}>
                   Income
                 </Text>
-              </Pressable>
+              </HapticPressable>
             </View>
 
             {/* Amount Input */}
@@ -254,8 +264,9 @@ export function AddExpenseModal({
                 const isSelected = category === catKey;
 
                 return (
-                  <Pressable
+                  <HapticPressable
                     key={catKey}
+                    haptic="light"
                     onPress={() => setCategory(catKey)}
                     style={[
                       styles.categoryChip,
@@ -277,7 +288,7 @@ export function AddExpenseModal({
                       ]}>
                       {meta.label.split(' ')[0]}
                     </Text>
-                  </Pressable>
+                  </HapticPressable>
                 );
               })}
             </View>
@@ -304,7 +315,8 @@ export function AddExpenseModal({
             />
 
             {/* Submit Button */}
-            <Pressable
+            <HapticPressable
+              haptic="medium"
               disabled={isSubmitting}
               onPress={handleSubmit}
               style={({ pressed }) => [
@@ -318,7 +330,7 @@ export function AddExpenseModal({
               <Text style={styles.submitBtnText}>
                 {isSubmitting ? 'Saving...' : 'Add Transaction'}
               </Text>
-            </Pressable>
+            </HapticPressable>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>

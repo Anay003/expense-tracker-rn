@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { biometricService, BiometricStatus } from '@/services/biometricService';
+import { hapticService } from '@/services/hapticService';
 import { logger } from '@/services/logger';
 
 // 15 seconds grace period before re-locking when returning from background
@@ -36,10 +37,12 @@ export function AuthLockProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await biometricService.authenticate('Unlock Expense Tracker');
       if (result.success) {
+        hapticService.success();
         setIsLocked(false);
         lastBackgroundTime.current = null;
         return true;
       }
+      hapticService.error();
       return false;
     } finally {
       setIsAuthenticating(false);

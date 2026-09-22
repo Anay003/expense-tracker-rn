@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Pressable, Alert, Platform } from 'react-native
 import { Expense, CATEGORY_DETAILS } from '@/types/expense';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
+import { HapticPressable } from '@/components/haptic-pressable';
 
 interface TransactionItemProps {
   item: Expense;
@@ -92,7 +93,8 @@ export function TransactionItem({ item, onDelete }: TransactionItemProps) {
         </Text>
 
         {onDelete && (
-          <Pressable
+          <HapticPressable
+            haptic="warning"
             onPress={handleDelete}
             hitSlop={8}
             style={({ pressed }) => [
@@ -102,8 +104,9 @@ export function TransactionItem({ item, onDelete }: TransactionItemProps) {
             <Text style={[styles.deleteText, { color: theme.textSecondary }]}>
               ✕
             </Text>
-          </Pressable>
+          </HapticPressable>
         )}
+
       </View>
     </View>
   );

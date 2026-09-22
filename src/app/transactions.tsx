@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
-  Pressable,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { HapticPressable } from '@/components/haptic-pressable';
 
 import { useTheme } from '@/hooks/use-theme';
 import { useExpenses } from '@/hooks/use-expenses';
@@ -95,7 +95,8 @@ export default function TransactionsScreen() {
             </Text>
           </View>
 
-          <Pressable
+          <HapticPressable
+            haptic="medium"
             onPress={() => setModalVisible(true)}
             style={({ pressed }) => [
               styles.addBtn,
@@ -103,7 +104,7 @@ export default function TransactionsScreen() {
               pressed && { opacity: 0.8 },
             ]}>
             <Text style={styles.addBtnText}>+ Add</Text>
-          </Pressable>
+          </HapticPressable>
         </View>
 
         {/* Search Bar */}
@@ -124,11 +125,11 @@ export default function TransactionsScreen() {
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <Pressable onPress={() => setSearch('')} hitSlop={8}>
+            <HapticPressable haptic="light" onPress={() => setSearch('')} hitSlop={8}>
               <Text style={[styles.clearBtn, { color: theme.textSecondary }]}>
                 ✕
               </Text>
-            </Pressable>
+            </HapticPressable>
           )}
         </View>
 
@@ -137,8 +138,9 @@ export default function TransactionsScreen() {
           {(['all', 'expense', 'income'] as const).map((t) => {
             const isSelected = selectedType === t;
             return (
-              <Pressable
+              <HapticPressable
                 key={t}
+                haptic="selection"
                 onPress={() => setSelectedType(t)}
                 style={[
                   styles.typeChip,
@@ -160,7 +162,7 @@ export default function TransactionsScreen() {
                     ? 'All'
                     : t.charAt(0).toUpperCase() + t.slice(1)}
                 </Text>
-              </Pressable>
+              </HapticPressable>
             );
           })}
         </View>
@@ -170,7 +172,8 @@ export default function TransactionsScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryScroll}>
-          <Pressable
+          <HapticPressable
+            haptic="selection"
             onPress={() => setSelectedCategory('all')}
             style={[
               styles.catChip,
@@ -197,15 +200,16 @@ export default function TransactionsScreen() {
               ]}>
               All Categories
             </Text>
-          </Pressable>
+          </HapticPressable>
 
           {CATEGORIES.map((catKey) => {
             const meta = CATEGORY_DETAILS[catKey];
             const isSelected = selectedCategory === catKey;
 
             return (
-              <Pressable
+              <HapticPressable
                 key={catKey}
+                haptic="selection"
                 onPress={() => setSelectedCategory(catKey)}
                 style={[
                   styles.catChip,
@@ -225,7 +229,7 @@ export default function TransactionsScreen() {
                   ]}>
                   {meta.label.split(' ')[0]}
                 </Text>
-              </Pressable>
+              </HapticPressable>
             );
           })}
         </ScrollView>
@@ -259,11 +263,12 @@ export default function TransactionsScreen() {
               </Text>
 
               {hasActiveFilters && (
-                <Pressable
+                <HapticPressable
+                  haptic="selection"
                   onPress={clearFilters}
                   style={[styles.resetBtn, { backgroundColor: theme.accent }]}>
                   <Text style={styles.resetBtnText}>Clear All Filters</Text>
-                </Pressable>
+                </HapticPressable>
               )}
             </View>
           ) : (

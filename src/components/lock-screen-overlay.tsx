@@ -2,12 +2,12 @@ import { useAppLock } from '@/hooks/use-app-lock';
 import { useTheme } from '@/hooks/use-theme';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { HapticPressable } from '@/components/haptic-pressable';
 
 export function LockScreenOverlay() {
   const theme = useTheme();
@@ -45,7 +45,8 @@ export function LockScreenOverlay() {
         </View>
 
         {/* Unlock Action Button */}
-        <Pressable
+        <HapticPressable
+          haptic="medium"
           onPress={() => unlock()}
           disabled={isAuthenticating}
           style={({ pressed }) => [
@@ -59,7 +60,7 @@ export function LockScreenOverlay() {
           ) : (
             <Text style={styles.unlockButtonText}>Unlock with {biometricName}</Text>
           )}
-        </Pressable>
+        </HapticPressable>
       </SafeAreaView>
     </View>
   );

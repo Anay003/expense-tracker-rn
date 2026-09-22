@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +14,7 @@ import { useExpenses } from '@/hooks/use-expenses';
 import { StatCard } from '@/components/stat-card';
 import { TransactionItem } from '@/components/transaction-item';
 import { AddExpenseModal } from '@/components/add-expense-modal';
+import { HapticPressable } from '@/components/haptic-pressable';
 import { Spacing, MaxContentWidth, BottomTabInset } from '@/constants/theme';
 
 export default function DashboardScreen() {
@@ -44,7 +44,8 @@ export default function DashboardScreen() {
               </Text>
             </View>
 
-            <Pressable
+            <HapticPressable
+              haptic="medium"
               onPress={() => setModalVisible(true)}
               style={({ pressed }) => [
                 styles.addBtn,
@@ -52,7 +53,7 @@ export default function DashboardScreen() {
                 pressed && { opacity: 0.8 },
               ]}>
               <Text style={styles.addBtnText}>+ Add</Text>
-            </Pressable>
+            </HapticPressable>
           </View>
 
           {/* Balance Card */}
@@ -83,7 +84,8 @@ export default function DashboardScreen() {
           </View>
 
           {/* Quick CTA Banner */}
-          <Pressable
+          <HapticPressable
+            haptic="light"
             onPress={() => setModalVisible(true)}
             style={({ pressed }) => [
               styles.ctaCard,
@@ -106,7 +108,7 @@ export default function DashboardScreen() {
               </View>
             </View>
             <Text style={[styles.ctaArrow, { color: theme.accent }]}>→</Text>
-          </Pressable>
+          </HapticPressable>
 
           {/* Recent Transactions Header */}
           <View style={styles.sectionHeader}>
@@ -114,13 +116,14 @@ export default function DashboardScreen() {
               Recent Transactions
             </Text>
             {expenses.length > 5 && (
-              <Pressable
+              <HapticPressable
+                haptic="selection"
                 onPress={() => router.push('/transactions' as any)}
                 hitSlop={8}>
                 <Text style={[styles.viewAllText, { color: theme.accent }]}>
                   View All ({expenses.length})
                 </Text>
-              </Pressable>
+              </HapticPressable>
             )}
           </View>
 
