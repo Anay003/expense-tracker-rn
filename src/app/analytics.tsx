@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/use-theme';
-import { useExpenses } from '@/hooks/use-expenses';
 import { CategoryBreakdown } from '@/components/category-breakdown';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useExpenses } from '@/hooks/use-expenses';
+import { useTheme } from '@/hooks/use-theme';
 import { CATEGORY_DETAILS } from '@/types/expense';
-import { Spacing, MaxContentWidth, BottomTabInset } from '@/constants/theme';
 
 export default function AnalyticsScreen() {
   const theme = useTheme();
@@ -144,57 +144,6 @@ export default function AnalyticsScreen() {
           {/* Category Breakdown Progress Bars */}
           <View style={styles.section}>
             <CategoryBreakdown stats={summary.breakdown} />
-          </View>
-
-          {/* .NET Backend Integration Guide Card */}
-          <View
-            style={[
-              styles.backendCard,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.border,
-              },
-            ]}>
-            <View style={styles.backendHeader}>
-              <Text style={styles.backendEmoji}>🚀</Text>
-              <Text style={[styles.backendTitle, { color: theme.text }]}>
-                Ready for .NET Web API
-              </Text>
-            </View>
-
-            <Text
-              style={[styles.backendDescription, { color: theme.textSecondary }]}>
-              This frontend connects to an abstract repository layer (
-              <Text style={{ fontWeight: '700' }}>IExpenseService</Text>). When
-              you are ready to add your ASP.NET Core backend, simply plug in
-              your endpoints:
-            </Text>
-
-            <View
-              style={[
-                styles.codeBlock,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}>
-              <Text style={[styles.codeText, { color: theme.accent }]}>
-                GET /api/expenses → returns Expense[]
-              </Text>
-              <Text style={[styles.codeText, { color: theme.accent }]}>
-                POST /api/expenses → creates new Expense
-              </Text>
-              <Text style={[styles.codeText, { color: theme.accent }]}>
-                DELETE /api/expenses/&#123;id&#125; → removes record
-              </Text>
-              <Text style={[styles.codeText, { color: theme.accent }]}>
-                GET /api/expenses/summary → returns totals
-              </Text>
-            </View>
-
-            <Text style={[styles.backendNote, { color: theme.textSecondary }]}>
-              File to update:{' '}
-              <Text style={{ fontWeight: '600' }}>
-                src/services/expenseService.ts
-              </Text>
-            </Text>
           </View>
         </View>
       </ScrollView>

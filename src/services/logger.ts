@@ -30,6 +30,13 @@ class AppLogger {
     }
   }
 
+  warn(message: string, context?: any) {
+    if (this.isDev) {
+      const extra = context !== undefined ? (typeof context === 'object' ? ` | ${JSON.stringify(context)}` : ` | ${context}`) : '';
+      console.warn(`[WARN] ${message}${extra}`);
+    }
+  }
+
   error(message: string, error?: unknown) {
     console.error(`[ERROR] ${message}`, error);
   }

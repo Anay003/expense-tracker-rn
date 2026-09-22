@@ -4,6 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import AppTabs from '@/components/app-tabs';
+import { AuthLockProvider } from '@/hooks/use-app-lock';
+import { LockScreenOverlay } from '@/components/lock-screen-overlay';
 
 // Prevent native splash screen from hiding before initial mount
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -25,10 +27,13 @@ export default function TabLayout() {
     dismissSplash();
   }, []);
 
-
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AppTabs />
+      <AuthLockProvider>
+        <AppTabs />
+        <LockScreenOverlay />
+      </AuthLockProvider>
     </ThemeProvider>
   );
 }
+
