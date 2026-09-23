@@ -19,6 +19,7 @@ import {
   ArrowRight,
   FileText,
   ShieldCheck,
+  LogOut,
   LucideIcon,
   LucideProps,
 } from 'lucide-react-native';
@@ -49,6 +50,7 @@ const ICON_MAP: Record<AppIconName, LucideIcon> = {
   empty: FileText,
   'shield-check': ShieldCheck,
   bolt: Zap,
+  'log-out': LogOut,
 };
 
 export interface AppIconProps extends Omit<LucideProps, 'color'> {

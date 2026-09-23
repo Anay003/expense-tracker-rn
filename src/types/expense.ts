@@ -62,7 +62,8 @@ export type AppIconName =
   | 'arrow-right'
   | 'empty'
   | 'shield-check'
-  | 'bolt';
+  | 'bolt'
+  | 'log-out';
 
 export interface CategoryMeta {
   label: string;

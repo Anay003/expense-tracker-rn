@@ -6,16 +6,37 @@ import { useColorScheme } from 'react-native';
 import AppTabs from '@/components/app-tabs';
 import { AuthLockProvider } from '@/hooks/use-app-lock';
 import { LockScreenOverlay } from '@/components/lock-screen-overlay';
+import { databaseService } from '@/services/databaseService';
+import { AuthProvider, useAuth } from '@/context/auth-context';
+import { AuthModal } from '@/components/auth-modal';
 
 // Prevent native splash screen from hiding before initial mount
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+function RootContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  return (
+    <>
+      <AppTabs />
+      <LockScreenOverlay />
+      {!isLoading && !isAuthenticated && <AuthModal visible={!isAuthenticated} />}
+    </>
+  );
+}
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // Hide native splash screen safely with retry if native view was animating
-    const dismissSplash = async () => {
+    // Initialize local SQLite database and dismiss splash screen safely
+    const initApp = async () => {
+      try {
+        await databaseService.init();
+      } catch (err) {
+        console.warn('Failed to initialize local SQLite database', err);
+      }
+
       try {
         await SplashScreen.hideAsync();
       } catch {
@@ -24,16 +45,16 @@ export default function TabLayout() {
         }, 100);
       }
     };
-    dismissSplash();
+    initApp();
   }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthLockProvider>
-        <AppTabs />
-        <LockScreenOverlay />
-      </AuthLockProvider>
+      <AuthProvider>
+        <AuthLockProvider>
+          <RootContent />
+        </AuthLockProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
-

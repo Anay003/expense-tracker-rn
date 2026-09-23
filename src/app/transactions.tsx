@@ -175,6 +175,7 @@ export default function TransactionsScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.categoryScrollView}
           contentContainerStyle={styles.categoryScroll}>
           <HapticPressable
             haptic="selection"
@@ -245,6 +246,7 @@ export default function TransactionsScreen() {
 
         {/* Transactions List */}
         <ScrollView
+          style={styles.listScrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}>
           {loading ? (
@@ -383,18 +385,23 @@ const styles = StyleSheet.create({
   typeChipText: {
     fontSize: 13,
   },
-  categoryScroll: {
-    paddingVertical: 4,
-    gap: 8,
+  categoryScrollView: {
+    flexGrow: 0,
     marginBottom: Spacing.three,
+  },
+  categoryScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 2,
+    gap: 8,
   },
   catChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    height: 34,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 17,
     borderWidth: 1,
   },
   catChipEmoji: {
@@ -402,6 +409,9 @@ const styles = StyleSheet.create({
   },
   catChipText: {
     fontSize: 12,
+  },
+  listScrollView: {
+    flex: 1,
   },
   listContainer: {
     paddingBottom: BottomTabInset + Spacing.six,

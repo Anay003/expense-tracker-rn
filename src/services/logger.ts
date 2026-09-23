@@ -43,3 +43,4 @@ class AppLogger {
 }
 
 export const logger = new AppLogger();
+export default logger;

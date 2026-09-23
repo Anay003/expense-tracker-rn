@@ -5,12 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { useTheme } from '@/hooks/use-theme';
 import { useExpenses } from '@/hooks/use-expenses';
+import { useAuth } from '@/context/auth-context';
 import { StatCard } from '@/components/stat-card';
 import { TransactionItem } from '@/components/transaction-item';
 import { AddExpenseModal } from '@/components/add-expense-modal';
@@ -22,7 +24,26 @@ export default function DashboardScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { expenses, summary, loading, deleteExpense, refresh } = useExpenses();
+  const { user, logout } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out? Your offline data is safely stored.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            refresh();
+          },
+        },
+      ]
+    );
+  };
 
   const recentTransactions = expenses.slice(0, 5);
 
@@ -36,25 +57,38 @@ export default function DashboardScreen() {
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[styles.greeting, { color: theme.textSecondary }]}>
-                Welcome back 👋
+                {user?.name ? `Hi, ${user.name} 👋` : 'Welcome back 👋'}
               </Text>
               <Text style={[styles.appTitle, { color: theme.text }]}>
                 Expense Tracker
               </Text>
             </View>
 
-            <HapticPressable
-              haptic="medium"
-              onPress={() => setModalVisible(true)}
-              style={({ pressed }) => [
-                styles.addBtn,
-                { backgroundColor: theme.accent },
-                pressed && { opacity: 0.8 },
-              ]}>
-              <Text style={styles.addBtnText}>+ Add</Text>
-            </HapticPressable>
+            <View style={styles.headerActions}>
+              <HapticPressable
+                haptic="light"
+                onPress={handleLogout}
+                style={({ pressed }) => [
+                  styles.iconBtn,
+                  { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                  pressed && { opacity: 0.8 },
+                ]}>
+                <AppIcon name="log-out" size={18} color={theme.textSecondary} />
+              </HapticPressable>
+
+              <HapticPressable
+                haptic="medium"
+                onPress={() => setModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.addBtn,
+                  { backgroundColor: theme.accent },
+                  pressed && { opacity: 0.8 },
+                ]}>
+                <Text style={styles.addBtnText}>+ Add</Text>
+              </HapticPressable>
+            </View>
           </View>
 
           {/* Balance Card */}
@@ -205,6 +239,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addBtn: {
     paddingHorizontal: Spacing.three,
