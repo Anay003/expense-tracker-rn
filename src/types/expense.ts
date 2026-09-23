@@ -42,20 +42,43 @@ export interface ExpenseFilter {
   type?: ExpenseType | 'all';
 }
 
+export type AppIconName =
+  | 'food'
+  | 'transport'
+  | 'shopping'
+  | 'bills'
+  | 'entertainment'
+  | 'salary'
+  | 'investment'
+  | 'health'
+  | 'other'
+  | 'lock'
+  | 'balance'
+  | 'income'
+  | 'expense'
+  | 'search'
+  | 'close'
+  | 'plus'
+  | 'arrow-right'
+  | 'empty'
+  | 'shield-check'
+  | 'bolt';
+
 export interface CategoryMeta {
   label: string;
+  icon: AppIconName;
   emoji: string;
   color: string;
 }
 
 export const CATEGORY_DETAILS: Record<ExpenseCategory, CategoryMeta> = {
-  food: { label: 'Food & Dining', emoji: '🍔', color: '#F59E0B' },
-  transport: { label: 'Transportation', emoji: '🚗', color: '#3B82F6' },
-  shopping: { label: 'Shopping', emoji: '🛍️', color: '#EC4899' },
-  bills: { label: 'Bills & Utilities', emoji: '⚡', color: '#8B5CF6' },
-  entertainment: { label: 'Entertainment', emoji: '🎬', color: '#6366F1' },
-  salary: { label: 'Salary & Earnings', emoji: '💰', color: '#10B981' },
-  investment: { label: 'Investment & Dividends', emoji: '📈', color: '#06B6D4' },
-  health: { label: 'Health & Wellness', emoji: '💊', color: '#14B8A6' },
-  other: { label: 'General / Misc', emoji: '📦', color: '#64748B' },
+  food: { label: 'Food & Dining', icon: 'food', emoji: '🍔', color: '#F59E0B' },
+  transport: { label: 'Transportation', icon: 'transport', emoji: '🚗', color: '#3B82F6' },
+  shopping: { label: 'Shopping', icon: 'shopping', emoji: '🛍️', color: '#EC4899' },
+  bills: { label: 'Bills & Utilities', icon: 'bills', emoji: '⚡', color: '#8B5CF6' },
+  entertainment: { label: 'Entertainment', icon: 'entertainment', emoji: '🎬', color: '#6366F1' },
+  salary: { label: 'Salary & Earnings', icon: 'salary', emoji: '💰', color: '#10B981' },
+  investment: { label: 'Investment & Dividends', icon: 'investment', emoji: '📈', color: '#06B6D4' },
+  health: { label: 'Health & Wellness', icon: 'health', emoji: '💊', color: '#14B8A6' },
+  other: { label: 'General / Misc', icon: 'other', emoji: '📦', color: '#64748B' },
 };

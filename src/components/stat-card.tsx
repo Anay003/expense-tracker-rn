@@ -1,13 +1,15 @@
 import { View, StyleSheet, Text } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
+import { AppIcon } from '@/components/app-icon';
+import { AppIconName } from '@/types/expense';
 
 interface StatCardProps {
   title: string;
   amount: number;
   type?: 'balance' | 'income' | 'expense';
   subtitle?: string;
-  icon?: string;
+  icon?: AppIconName;
 }
 
 export function StatCard({
@@ -50,7 +52,7 @@ export function StatCard({
         <View style={styles.titleRow}>
           {icon && (
             <View style={[styles.iconBadge, { backgroundColor: getBadgeBg() }]}>
-              <Text style={styles.iconText}>{icon}</Text>
+              <AppIcon name={icon} size={15} color={getAmountColor()} />
             </View>
           )}
           <Text style={[styles.title, { color: theme.textSecondary }]}>

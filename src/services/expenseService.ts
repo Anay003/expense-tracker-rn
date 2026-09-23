@@ -12,12 +12,13 @@ export interface IExpenseService {
   getAll(filter?: ExpenseFilter): Promise<Expense[]>;
   add(item: Omit<Expense, 'id'>): Promise<Expense>;
   delete(id: string): Promise<boolean>;
-  getSummary(): Promise<ExpenseSummary>;
+  getSummary(items?: Expense[]): Promise<ExpenseSummary>;
   subscribe(listener: () => void): () => void;
 }
 
 class ExpenseService implements IExpenseService {
   private cachedItems: Expense[] = [];
+  private inFlightFetch: Promise<Expense[]> | null = null;
   private listeners: Set<() => void> = new Set();
   private endpoint = `${API_BASE_URL}/expenses`;
 
@@ -40,47 +41,63 @@ class ExpenseService implements IExpenseService {
    * GET /api/expenses
    */
   public async getAll(filter?: ExpenseFilter): Promise<Expense[]> {
-    logger.http('GET', this.endpoint);
-
-    try {
-      const response = await fetch(this.endpoint, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const rawItems: any[] = await response.json();
-      logger.httpSuccess('GET', this.endpoint, response.status, `Received ${rawItems.length} items`);
-
-      // Normalize data from .NET
-      this.cachedItems = rawItems.map((item) => ({
-        id: String(item.id || item.Id || ''),
-        title: item.title || item.Title || '',
-        amount: Number(item.amount ?? item.Amount ?? 0),
-        category: (item.category || item.Category || 'other').toLowerCase() as ExpenseCategory,
-        type: (item.type || item.Type || 'expense').toLowerCase() as 'expense' | 'income',
-        date: item.date || item.Date || new Date().toISOString().split('T')[0],
-        note: item.note ?? item.Note ?? '',
-      }));
-    } catch (error) {
-      logger.httpError(
-        'GET',
-        this.endpoint,
-        0,
-        `Failed to reach .NET backend: ${error instanceof Error ? error.message : String(error)}`
-      );
-      // Re-throw so UI can reflect the network error state accurately
-      if (this.cachedItems.length === 0) {
-        throw error;
-      }
+    if (this.inFlightFetch) {
+      const items = await this.inFlightFetch;
+      return this.applyFilter(items, filter);
     }
 
-    let result = [...this.cachedItems];
+    this.inFlightFetch = (async () => {
+      logger.http('GET', this.endpoint);
+
+      try {
+        const response = await fetch(this.endpoint, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const rawItems: any[] = await response.json();
+        logger.httpSuccess('GET', this.endpoint, response.status, `Received ${rawItems.length} items`);
+
+        // Normalize data from .NET
+        this.cachedItems = rawItems.map((item) => ({
+          id: String(item.id || item.Id || ''),
+          title: item.title || item.Title || '',
+          amount: Number(item.amount ?? item.Amount ?? 0),
+          category: (item.category || item.Category || 'other').toLowerCase() as ExpenseCategory,
+          type: (item.type || item.Type || 'expense').toLowerCase() as 'expense' | 'income',
+          date: item.date || item.Date || new Date().toISOString().split('T')[0],
+          note: item.note ?? item.Note ?? '',
+        }));
+
+        return this.cachedItems;
+      } catch (error) {
+        logger.httpError(
+          'GET',
+          this.endpoint,
+          0,
+          `Failed to reach .NET backend: ${error instanceof Error ? error.message : String(error)}`
+        );
+        if (this.cachedItems.length === 0) {
+          throw error;
+        }
+        return this.cachedItems;
+      } finally {
+        this.inFlightFetch = null;
+      }
+    })();
+
+    const items = await this.inFlightFetch;
+    return this.applyFilter(items, filter);
+  }
+
+  private applyFilter(items: Expense[], filter?: ExpenseFilter): Expense[] {
+    let result = [...items];
 
     // Client-side filtering
     if (filter?.search && filter.search.trim().length > 0) {
@@ -169,12 +186,17 @@ class ExpenseService implements IExpenseService {
    * Aggregates summary stats directly from current expenses in memory
    * (Zero duplicate network calls)
    */
-  public async getSummary(): Promise<ExpenseSummary> {
+  public async getSummary(items?: Expense[]): Promise<ExpenseSummary> {
+    let sourceItems = items ?? this.cachedItems;
+    if (!items && this.cachedItems.length === 0) {
+      sourceItems = await this.getAll();
+    }
+
     let totalIncome = 0;
     let totalExpense = 0;
     const categoryTotals: Partial<Record<ExpenseCategory, { amount: number; count: number }>> = {};
 
-    for (const item of this.cachedItems) {
+    for (const item of sourceItems) {
       if (item.type === 'income') {
         totalIncome += item.amount;
       } else {

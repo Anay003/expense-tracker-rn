@@ -14,6 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useExpenses } from '@/hooks/use-expenses';
 import { TransactionItem } from '@/components/transaction-item';
 import { AddExpenseModal } from '@/components/add-expense-modal';
+import { AppIcon, CategoryIcon } from '@/components/app-icon';
 import {
   ExpenseCategory,
   ExpenseType,
@@ -116,7 +117,12 @@ export default function TransactionsScreen() {
               borderColor: theme.border,
             },
           ]}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <AppIcon
+            name="search"
+            size={16}
+            color={theme.textSecondary}
+            style={{ marginRight: Spacing.two }}
+          />
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
             placeholder="Search transactions, notes..."
@@ -126,9 +132,7 @@ export default function TransactionsScreen() {
           />
           {search.length > 0 && (
             <HapticPressable haptic="light" onPress={() => setSearch('')} hitSlop={8}>
-              <Text style={[styles.clearBtn, { color: theme.textSecondary }]}>
-                ✕
-              </Text>
+              <AppIcon name="close" size={14} color={theme.textSecondary} />
             </HapticPressable>
           )}
         </View>
@@ -218,7 +222,12 @@ export default function TransactionsScreen() {
                     borderColor: isSelected ? meta.color : theme.border,
                   },
                 ]}>
-                <Text style={styles.catChipEmoji}>{meta.emoji}</Text>
+                <CategoryIcon
+                  category={catKey}
+                  size={14}
+                  color={isSelected ? '#FFFFFF' : meta.color}
+                  style={{ marginRight: 6 }}
+                />
                 <Text
                   style={[
                     styles.catChipText,
@@ -253,7 +262,12 @@ export default function TransactionsScreen() {
                   borderColor: theme.border,
                 },
               ]}>
-              <Text style={styles.emptyEmoji}>🔎</Text>
+              <AppIcon
+                name="search"
+                size={36}
+                color={theme.textSecondary}
+                style={{ marginBottom: Spacing.two }}
+              />
               <Text style={[styles.emptyTitle, { color: theme.text }]}>
                 No matching transactions
               </Text>

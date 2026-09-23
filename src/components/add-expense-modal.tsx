@@ -21,6 +21,7 @@ import { Spacing } from '@/constants/theme';
 import { expenseService } from '@/services/expenseService';
 import { hapticService } from '@/services/hapticService';
 import { HapticPressable } from '@/components/haptic-pressable';
+import { AppIcon, CategoryIcon } from '@/components/app-icon';
 
 interface AddExpenseModalProps {
   visible: boolean;
@@ -154,9 +155,7 @@ export function AddExpenseModal({
               onPress={onClose}
               hitSlop={10}
               style={({ pressed }) => pressed && { opacity: 0.6 }}>
-              <Text style={[styles.closeIcon, { color: theme.textSecondary }]}>
-                ✕
-              </Text>
+              <AppIcon name="close" size={20} color={theme.textSecondary} />
             </HapticPressable>
           </View>
 
@@ -178,6 +177,12 @@ export function AddExpenseModal({
                   },
                 ]}
                 onPress={() => handleTypeChange('expense')}>
+                <AppIcon
+                  name="expense"
+                  size={14}
+                  color={type === 'expense' ? '#FFFFFF' : theme.textSecondary}
+                  style={{ marginRight: 6 }}
+                />
                 <Text
                   style={[
                     styles.typeTabText,
@@ -199,6 +204,12 @@ export function AddExpenseModal({
                   },
                 ]}
                 onPress={() => handleTypeChange('income')}>
+                <AppIcon
+                  name="income"
+                  size={14}
+                  color={type === 'income' ? '#FFFFFF' : theme.textSecondary}
+                  style={{ marginRight: 6 }}
+                />
                 <Text
                   style={[
                     styles.typeTabText,
@@ -277,7 +288,12 @@ export function AddExpenseModal({
                         borderColor: isSelected ? meta.color : theme.border,
                       },
                     ]}>
-                    <Text style={styles.categoryEmoji}>{meta.emoji}</Text>
+                    <CategoryIcon
+                      category={catKey}
+                      size={15}
+                      color={isSelected ? meta.color : theme.textSecondary}
+                      style={{ marginRight: 6 }}
+                    />
                     <Text
                       style={[
                         styles.categoryLabel,

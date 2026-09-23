@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HapticPressable } from '@/components/haptic-pressable';
+import { AppIcon } from '@/components/app-icon';
 
 export function LockScreenOverlay() {
   const theme = useTheme();
@@ -28,7 +29,7 @@ export function LockScreenOverlay() {
       <SafeAreaView style={styles.content}>
         {/* Header Icon Badge */}
         <View style={[styles.iconBadge, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={styles.lockEmoji}>🔒</Text>
+          <AppIcon name="lock" size={32} color={theme.accent} />
         </View>
 
         {/* Title and Subtitle */}

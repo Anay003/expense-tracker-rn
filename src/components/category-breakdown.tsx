@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { CategoryStat, CATEGORY_DETAILS } from '@/types/expense';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
+import { CategoryIcon } from '@/components/app-icon';
 
 interface CategoryBreakdownProps {
   stats: CategoryStat[];
@@ -52,7 +53,11 @@ export function CategoryBreakdown({ stats }: CategoryBreakdownProps) {
           <View key={stat.category} style={styles.row}>
             <View style={styles.labelRow}>
               <View style={styles.nameGroup}>
-                <Text style={styles.emoji}>{meta.emoji}</Text>
+                <CategoryIcon
+                  category={stat.category}
+                  size={16}
+                  style={{ marginRight: Spacing.two }}
+                />
                 <Text style={[styles.label, { color: theme.text }]}>
                   {meta.label}
                 </Text>

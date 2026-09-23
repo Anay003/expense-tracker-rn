@@ -15,6 +15,7 @@ import { StatCard } from '@/components/stat-card';
 import { TransactionItem } from '@/components/transaction-item';
 import { AddExpenseModal } from '@/components/add-expense-modal';
 import { HapticPressable } from '@/components/haptic-pressable';
+import { AppIcon } from '@/components/app-icon';
 import { Spacing, MaxContentWidth, BottomTabInset } from '@/constants/theme';
 
 export default function DashboardScreen() {
@@ -63,7 +64,7 @@ export default function DashboardScreen() {
               amount={summary.totalBalance}
               type="balance"
               subtitle={`Savings Rate: ${summary.savingsRate}%`}
-              icon="💳"
+              icon="balance"
             />
           </View>
 
@@ -73,13 +74,13 @@ export default function DashboardScreen() {
               title="Income"
               amount={summary.totalIncome}
               type="income"
-              icon="📈"
+              icon="income"
             />
             <StatCard
               title="Expenses"
               amount={summary.totalExpense}
               type="expense"
-              icon="📉"
+              icon="expense"
             />
           </View>
 
@@ -96,7 +97,7 @@ export default function DashboardScreen() {
               pressed && { opacity: 0.8 },
             ]}>
             <View style={styles.ctaLeft}>
-              <Text style={styles.ctaEmoji}>⚡</Text>
+              <AppIcon name="bolt" size={20} color={theme.accent} />
               <View>
                 <Text style={[styles.ctaTitle, { color: theme.text }]}>
                   Track a payment or expense
@@ -107,7 +108,7 @@ export default function DashboardScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={[styles.ctaArrow, { color: theme.accent }]}>→</Text>
+            <AppIcon name="arrow-right" size={18} color={theme.accent} />
           </HapticPressable>
 
           {/* Recent Transactions Header */}
@@ -143,7 +144,7 @@ export default function DashboardScreen() {
                   borderColor: theme.border,
                 },
               ]}>
-              <Text style={styles.emptyEmoji}>📝</Text>
+              <AppIcon name="empty" size={36} color={theme.textSecondary} style={{ marginBottom: Spacing.two }} />
               <Text style={[styles.emptyTitle, { color: theme.text }]}>
                 No transactions yet
               </Text>

@@ -6,6 +6,7 @@ import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useExpenses } from '@/hooks/use-expenses';
 import { useTheme } from '@/hooks/use-theme';
 import { CATEGORY_DETAILS } from '@/types/expense';
+import { AppIcon, CategoryIcon } from '@/components/app-icon';
 
 export default function AnalyticsScreen() {
   const theme = useTheme();
@@ -54,7 +55,12 @@ export default function AnalyticsScreen() {
                   borderColor: theme.border,
                 },
               ]}>
-              <Text style={styles.statEmoji}>🎯</Text>
+              <AppIcon
+                name="shield-check"
+                size={22}
+                color={theme.income}
+                style={{ marginBottom: 4 }}
+              />
               <Text
                 style={[styles.statLabel, { color: theme.textSecondary }]}>
                 Savings Rate
@@ -72,9 +78,20 @@ export default function AnalyticsScreen() {
                   borderColor: theme.border,
                 },
               ]}>
-              <Text style={styles.statEmoji}>
-                {topCategoryMeta ? topCategoryMeta.emoji : '📊'}
-              </Text>
+              {topCategoryStat ? (
+                <CategoryIcon
+                  category={topCategoryStat.category}
+                  size={22}
+                  style={{ marginBottom: 4 }}
+                />
+              ) : (
+                <AppIcon
+                  name="empty"
+                  size={22}
+                  color={theme.textSecondary}
+                  style={{ marginBottom: 4 }}
+                />
+              )}
               <Text
                 style={[styles.statLabel, { color: theme.textSecondary }]}>
                 Top Expense
@@ -94,7 +111,12 @@ export default function AnalyticsScreen() {
                   borderColor: theme.border,
                 },
               ]}>
-              <Text style={styles.statEmoji}>🧾</Text>
+              <AppIcon
+                name="empty"
+                size={22}
+                color={theme.accent}
+                style={{ marginBottom: 4 }}
+              />
               <Text
                 style={[styles.statLabel, { color: theme.textSecondary }]}>
                 Total Items

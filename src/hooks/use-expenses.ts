@@ -16,10 +16,8 @@ export function useExpenses(initialFilter?: ExpenseFilter) {
 
   const refresh = useCallback(async () => {
     try {
-      const [list, sum] = await Promise.all([
-        expenseService.getAll(filter),
-        expenseService.getSummary(),
-      ]);
+      const list = await expenseService.getAll(filter);
+      const sum = await expenseService.getSummary(list);
       setExpenses(list);
       setSummary(sum);
     } catch (err) {

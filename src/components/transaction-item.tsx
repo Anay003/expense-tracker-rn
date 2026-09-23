@@ -3,6 +3,7 @@ import { Expense, CATEGORY_DETAILS } from '@/types/expense';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { HapticPressable } from '@/components/haptic-pressable';
+import { CategoryIcon, AppIcon } from '@/components/app-icon';
 
 interface TransactionItemProps {
   item: Expense;
@@ -58,13 +59,13 @@ export function TransactionItem({ item, onDelete }: TransactionItemProps) {
           borderColor: theme.border,
         },
       ]}>
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: categoryMeta.color + '22' },
-        ]}>
-        <Text style={styles.emoji}>{categoryMeta.emoji}</Text>
-      </View>
+      <CategoryIcon
+        category={item.category}
+        badge={true}
+        badgeSize={42}
+        size={20}
+        style={{ marginRight: Spacing.three }}
+      />
 
       <View style={styles.details}>
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
@@ -101,9 +102,7 @@ export function TransactionItem({ item, onDelete }: TransactionItemProps) {
               styles.deleteBtn,
               pressed && { opacity: 0.6 },
             ]}>
-            <Text style={[styles.deleteText, { color: theme.textSecondary }]}>
-              ✕
-            </Text>
+            <AppIcon name="close" size={14} color={theme.textSecondary} />
           </HapticPressable>
         )}
 
