@@ -134,7 +134,7 @@ class DatabaseService implements IDatabaseService {
       const params: any[] = [];
 
       if (userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
+        query += ' AND user_id = ?';
         params.push(userId);
       }
 
@@ -310,7 +310,7 @@ class DatabaseService implements IDatabaseService {
       const params: any[] = [];
 
       if (userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
+        query += ' AND user_id = ?';
         params.push(userId);
       }
 

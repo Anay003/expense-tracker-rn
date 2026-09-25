@@ -16,7 +16,8 @@ export interface IExpenseService {
   delete(id: string): Promise<boolean>;
   getSummary(items?: Expense[]): Promise<ExpenseSummary>;
   subscribe(listener: () => void): () => void;
-  sync(): Promise<void>;
+  sync(force?: boolean): Promise<void>;
+  reset(): void;
 }
 
 /**
@@ -36,6 +37,18 @@ class ExpenseService implements IExpenseService {
   private isSyncing = false;
   private lastSyncTime = 0;
   private readonly SYNC_COOLDOWN_MS = 15000;
+
+  /**
+   * Resets in-memory cached state, in-flight promises, and sync cooldowns.
+   * Call upon user logout or session switch to prevent cross-account cache leakage.
+   */
+  public reset(): void {
+    this.cachedItems = [];
+    this.inFlightFetch = null;
+    this.isSyncing = false;
+    this.lastSyncTime = 0;
+    this.notify();
+  }
 
   public subscribe(listener: () => void): () => void {
     this.listeners.add(listener);

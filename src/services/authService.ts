@@ -2,6 +2,7 @@ import { API_BASE_URL } from '@/config/api';
 import { AuthResponse, LoginCredentials, RegisterCredentials, User } from '@/types/auth';
 import { tokenStorage } from './tokenStorage';
 import { databaseService } from './databaseService';
+import { expenseService } from './expenseService';
 import { logger } from './logger';
 
 const AUTH_URL = `${API_BASE_URL}/auth`;
@@ -59,6 +60,9 @@ class AuthService {
       // 2. Cache user profile in SQLite for offline greeting
       await databaseService.saveUser(data.user);
 
+      // 3. Reset in-memory cache to guarantee fresh state for the new user
+      expenseService.reset();
+
       logger.info(`AuthService: Login successful for ${data.user.email}`);
       return data.user;
     } catch (error) {
@@ -91,6 +95,9 @@ class AuthService {
       });
 
       await databaseService.saveUser(data.user);
+
+      // Reset in-memory cache to guarantee fresh state for the new user
+      expenseService.reset();
 
       logger.info(`AuthService: User registered successfully: ${data.user.email}`);
       return data.user;
@@ -142,13 +149,27 @@ class AuthService {
   }
 
   /**
-   * Logs out user: removes tokens from SecureStore and resets cached profile.
+   * Logs out user: attempts sync of offline changes, resets cache, purges local SQLite data and SecureStore.
    */
   async logout(): Promise<void> {
     try {
-      await tokenStorage.clearAll();
+      // 1. Attempt to flush pending offline transactions if online before session ends
+      try {
+        await expenseService.sync(true);
+      } catch {
+        // Safe to ignore if backend is unreachable
+      }
+
+      // 2. Reset in-memory expense service cache and cooldowns
+      expenseService.reset();
+
+      // 3. Clear local SQLite database (expenses and user profile)
+      await databaseService.clearAll();
       await databaseService.clearUser();
-      logger.info('AuthService: User logged out cleanly');
+
+      // 4. Clear secure tokens from KeyStore/Keychain
+      await tokenStorage.clearAll();
+      logger.info('AuthService: User logged out cleanly, local session wiped');
     } catch (error) {
       logger.error('AuthService.logout failed', error);
     }
