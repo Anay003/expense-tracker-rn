@@ -9,10 +9,12 @@ const AUTH_URL = `${API_BASE_URL}/auth`;
 const REQUEST_TIMEOUT = 10000;
 
 class AuthService {
+  private inFlightRefresh: Promise<string | null> | null = null;
+
   /**
-   * Helper for network requests with timeout
+   * Helper for network requests with timeout and transient retry
    */
-  private async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+  private async fetchWithTimeout(url: string, options: RequestInit, isRetry = false): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
@@ -27,6 +29,13 @@ class AuthService {
         },
       });
       return response;
+    } catch (err) {
+      if (!isRetry) {
+        logger.warn(`AuthService: Request to ${url} dropped, retrying in 1s...`, err);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return this.fetchWithTimeout(url, options, true);
+      }
+      throw err;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -108,35 +117,46 @@ class AuthService {
   }
 
   /**
-   * Silent background token refresh.
+   * Silent background token refresh with concurrent lock (mutex) to prevent race conditions during token rotation.
    */
   async refreshAccessToken(): Promise<string | null> {
-    try {
-      const refreshToken = await tokenStorage.getRefreshToken();
-      if (!refreshToken) return null;
-
-      const response = await this.fetchWithTimeout(`${AUTH_URL}/refresh`, {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (!response.ok) {
-        logger.warn('AuthService: Refresh token expired or revoked');
-        return null;
-      }
-
-      const data: AuthResponse = await response.json();
-
-      await tokenStorage.saveTokens({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-      });
-
-      return data.accessToken;
-    } catch (error) {
-      logger.error('AuthService.refreshAccessToken failed', error);
-      return null;
+    if (this.inFlightRefresh) {
+      return this.inFlightRefresh;
     }
+
+    this.inFlightRefresh = (async () => {
+      try {
+        const refreshToken = await tokenStorage.getRefreshToken();
+        if (!refreshToken) return null;
+
+        const response = await this.fetchWithTimeout(`${AUTH_URL}/refresh`, {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!response.ok) {
+          logger.warn(`AuthService: Refresh token expired or revoked (status ${response.status})`);
+          return null;
+        }
+
+        const data: AuthResponse = await response.json();
+
+        await tokenStorage.saveTokens({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        });
+
+        logger.info('AuthService: Access token refreshed and rotated successfully');
+        return data.accessToken;
+      } catch (error) {
+        logger.error('AuthService.refreshAccessToken failed', error);
+        return null;
+      } finally {
+        this.inFlightRefresh = null;
+      }
+    })();
+
+    return this.inFlightRefresh;
   }
 
   /**

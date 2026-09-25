@@ -66,18 +66,56 @@ class ExpenseService implements IExpenseService {
   }
 
   /**
-   * Helper to build authenticated HTTP headers
+   * Enterprise HTTP Client with 401 Interceptor and Transient Retry
+   * - Injects active JWT Bearer header
+   * - Retries transient DNS/connection drops once (e.g. UnknownHostException during boot)
+   * - Intercepts 401 Unauthorized: automatically triggers silent refresh and retries original request
+   * - Triggers session logout if refresh token has also expired
    */
-  private async getAuthHeaders(): Promise<Record<string, string>> {
-    const token = await tokenStorage.getAccessToken();
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    const buildHeaders = async (): Promise<Record<string, string>> => {
+      const token = await tokenStorage.getAccessToken();
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...((options.headers as Record<string, string>) || {}),
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return headers;
     };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+
+    let headers = await buildHeaders();
+    let response: Response;
+
+    try {
+      response = await fetch(url, { ...options, headers });
+    } catch (netErr) {
+      // Retry once after 1s for transient DNS/connection drops (e.g. UnknownHostException during boot)
+      logger.warn(`ExpenseService: Network request to ${url} failed, retrying once in 1s...`, netErr);
+      await new Promise((r) => setTimeout(r, 1000));
+      headers = await buildHeaders();
+      response = await fetch(url, { ...options, headers });
     }
-    return headers;
+
+    // Intercept 401 Unauthorized: token expired
+    if (response.status === 401) {
+      logger.info('ExpenseService: Received 401 Unauthorized. Attempting silent token refresh...');
+      const { authService } = require('./authService');
+      const newToken = await authService.refreshAccessToken();
+
+      if (newToken) {
+        logger.info('ExpenseService: Token refresh successful. Retrying original request...');
+        headers['Authorization'] = `Bearer ${newToken}`;
+        response = await fetch(url, { ...options, headers });
+      } else {
+        logger.warn('ExpenseService: Token refresh failed or expired. Triggering session logout.');
+        await authService.logout();
+      }
+    }
+
+    return response;
   }
 
   /**
@@ -141,11 +179,8 @@ class ExpenseService implements IExpenseService {
 
       this.inFlightFetch = (async () => {
         logger.http('GET', this.endpoint);
-        const headers = await this.getAuthHeaders();
-
-        const response = await fetch(this.endpoint, {
+        const response = await this.fetchWithAuth(this.endpoint, {
           method: 'GET',
-          headers,
         });
 
         if (!response.ok) {
@@ -210,13 +245,11 @@ class ExpenseService implements IExpenseService {
       if (pendingItems.length === 0) return;
 
       logger.info(`ExpenseService: Syncing ${pendingItems.length} pending offline transactions...`);
-      const headers = await this.getAuthHeaders();
 
       for (const item of pendingItems) {
         try {
-          const response = await fetch(this.endpoint, {
+          const response = await this.fetchWithAuth(this.endpoint, {
             method: 'POST',
-            headers,
             body: JSON.stringify({
               title: item.title,
               amount: item.amount,
@@ -295,11 +328,8 @@ class ExpenseService implements IExpenseService {
     (async () => {
       try {
         logger.http('POST', this.endpoint, item);
-        const headers = await this.getAuthHeaders();
-
-        const response = await fetch(this.endpoint, {
+        const response = await this.fetchWithAuth(this.endpoint, {
           method: 'POST',
-          headers,
           body: JSON.stringify(item),
         });
 
@@ -352,11 +382,8 @@ class ExpenseService implements IExpenseService {
 
     try {
       logger.http('DELETE', `${this.endpoint}/${id}`);
-      const headers = await this.getAuthHeaders();
-
-      const response = await fetch(`${this.endpoint}/${id}`, {
+      const response = await this.fetchWithAuth(`${this.endpoint}/${id}`, {
         method: 'DELETE',
-        headers,
       });
 
       if (!response.ok && response.status !== 404) {
